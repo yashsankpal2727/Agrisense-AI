@@ -204,13 +204,6 @@ API routes, request formats, environment variables, and service ports are define
 - Expand multilingual support.
 - Add deployment and automated testing workflows.
 
-## Author
-
-**Yash Sankpal**
-
-B.Tech in Computer Science and Engineering
-
-GitHub: [@yashsankpal2727](https://github.com/yashsankpal2727)
 
 ## License
 

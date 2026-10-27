@@ -1,381 +1,217 @@
-# AgriSense AI
+# Agrisense AI 🌱
 
-AgriSense AI is a web application for analyzing the quality of agricultural produce and viewing market price information.
+**AI-Powered Agricultural Produce Quality Inspection and Grading System**
 
-The project currently supports **apples, tomatoes, and dragon fruit**. Users can upload an image or use their camera; produce detection runs automatically, and trained machine learning models classify supported produce into **Grade A, Grade B, or Grade C** and generate a quality score.
+Agrisense AI is a web-based application designed to analyze agricultural produce images and estimate their quality using machine learning. It aims to help users assess the quality of fruits, view grading results, and access agricultural information through a simple interface.
 
-The application also includes market price information, analysis history, farmer profiles, and a multilingual interface.
+## Overview
+
+Traditional fruit quality inspection often depends on manual observation, which can be time-consuming and inconsistent. Agrisense AI explores how computer vision and machine learning can make produce inspection faster and more consistent.
+
+Users can upload or capture an image of agricultural produce, process it through the application's analysis workflow, and view the predicted quality grade and confidence score.
 
 ## Features
 
-* Automatic apple, tomato, and dragon fruit detection and quality grading
-* Grade A / B / C classification
-* Quality score out of 100
-* Image upload and camera capture
-* Analysis history
-* Farmer login and profile
-* APMC market price information
-* Market price comparison
-* English, Hindi, and Marathi interface
-* Gemini API integration for translation and AI-assisted features
-* Local Python ML engine for produce analysis
+- **AI-Based Quality Grading:** Predicts fruit quality grades using trained machine learning models.
+- **Fruit Classification:** Includes models for apple, tomato, and dragon fruit grading.
+- **Fruit Detection:** Includes a separate fruit detection model.
+- **Image Analysis:** Supports an image-based produce analysis workflow.
+- **Analysis Results:** Displays the predicted grade, confidence score, and related prediction information.
+- **Camera Support:** Includes a camera interface for capturing produce images.
+- **Multilingual Interface:** Includes language selection and API-based translation functionality.
+- **User Interface:** Provides pages for the dashboard, authentication, upload, analysis, results, history, market prices, and profile.
+- **Backend Integration:** Connects the web application with backend services and the Python ML engine.
 
-## How it works
-
-The application uses React for the frontend, Express.js for the backend, and Python for the machine learning part.
-
-```text
-User
-  ↓
-Upload / Camera
-  ↓
-React Frontend
-  ↓
-Node.js + Express
-  ↓
-Python ML Engine
-  ↓
-Produce Detection
-  ↓
-Grade Classification
-  ↓
-Quality Score
-  ↓
-Result
-```
-
-The ML pipeline uses trained PyTorch models to process the submitted image.
-
-## Machine Learning Models
-
-The trained models are stored in:
-
-```text
-ml/models/
-```
-
-Current models:
-
-| Model                       | Purpose                       |
-| --------------------------- | ----------------------------- |
-| `fruit_detection_model.pth` | Detects the supported produce |
-| `apple_grade_model.pth`     | Classifies apple quality      |
-| `tomato_grade_model.pth`    | Classifies tomato quality     |
-| `dragonfruit_grade_model.pth` | Classifies dragon fruit quality |
-
-The grading classes are:
-
-```text
-Grade A
-Grade B
-Grade C
-```
-
-The project also contains the training and testing scripts used during model development.
-
-## Tech Stack
+## Technology Stack
 
 ### Frontend
-
-* React.js
-* JSX
-* JavaScript
-* Vite
-* Tailwind CSS
+- React.js
+- JavaScript (JSX)
+- Vite
+- CSS
 
 ### Backend
-
-* Node.js
-* Express.js
+- Node.js
+- Express.js
+- REST API
 
 ### Machine Learning
+- Python
+- PyTorch
+- Torchvision
+- EfficientNet-B0 for fruit grading models
+- Computer vision and image classification
 
-* Python
-* PyTorch
-* Torchvision
-* EfficientNet-B0
-* Computer Vision
-* Image Classification
-
-### AI
-
-* Google Gemini API
-
-### Tools
-
-* Git
-* GitHub
-* npm
-* Python virtual environment
+### Development Tools
+- Git and GitHub
+- Visual Studio Code
+- npm
+- Python virtual environment
 
 ## Project Structure
 
 ```text
-Agrisense/
-│
-├── index.html
-├── package.json
-├── package-lock.json
-├── vite.config.js
-├── server.js
-├── metadata.json
-│
-├── ml_engine.py
-├── ml_server.py
-│
+Agrisense-AI/
 ├── ml/
 │   ├── models/
 │   │   ├── apple_grade_model.pth
 │   │   ├── tomato_grade_model.pth
+│   │   ├── dragonfruit_grade_model.pth
 │   │   └── fruit_detection_model.pth
-│   │
 │   ├── predict.py
-│   ├── split_fruit_dataset.py
-│   ├── test_fruit_detector.py
+│   ├── predict_dragonfruit.py
 │   ├── train.py
+│   ├── train_tomato.py
+│   ├── train_dragonfruit.py
 │   ├── train_fruit_detector.py
-│   └── train_tomato.py
-│
+│   └── ...
 ├── src/
-│   ├── App.jsx
-│   ├── main.jsx
-│   ├── index.css
-│   ├── types.js
-│   │
 │   ├── components/
-│   │   ├── CameraModal.jsx
-│   │   ├── LanguageSelect.jsx
-│   │   └── Navbar.jsx
-│   │
 │   ├── data/
-│   │   └── sampleProduce.js
-│   │
 │   ├── hooks/
-│   │   └── useApiTranslation.js
-│   │
-│   └── pages/
-│       ├── LandingPage.jsx
-│       ├── AuthPage.jsx
-│       ├── DashboardPage.jsx
-│       ├── UploadPage.jsx
-│       ├── AnalyzingPage.jsx
-│       ├── ResultPage.jsx
-│       ├── MarketPricePage.jsx
-│       ├── HistoryPage.jsx
-│       └── ProfilePage.jsx
-│
+│   ├── pages/
+│   ├── App.jsx
+│   ├── index.css
+│   ├── main.jsx
+│   └── types.js
+├── ml_engine.py
+├── ml_server.py
+├── server.js
+├── index.html
+├── package.json
+├── package-lock.json
+├── vite.config.js
 ├── .env.example
-├── .gitignore
 └── README.md
 ```
 
-## Running the Project
+## Getting Started
 
-### Requirements
+Follow these steps to run the project locally.
 
-Make sure you have the following installed:
+### Prerequisites
 
-* Node.js
-* npm
-* Python 3.10+
-* Git
+Install the following software:
 
-Check the installed versions:
+- [Node.js](https://nodejs.org/) and npm
+- [Python](https://www.python.org/)
+- [Git](https://git-scm.com/)
+- A code editor such as Visual Studio Code
 
-```bash
-node --version
-npm --version
-python --version
-git --version
-```
-
-### 1. Clone the repository
+### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yashsankpal2727/Agrisense.git
+git clone https://github.com/yashsankpal2727/Agrisense-AI.git
+cd Agrisense-AI
 ```
 
-Go to the project folder:
-
-```bash
-cd Agrisense
-```
-
-### 2. Install Node dependencies
+### 2. Install Node.js Dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Create a Python virtual environment
+### 3. Configure Environment Variables
 
-On Windows:
+Create a local `.env` file using `.env.example` as a reference.
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Open `.env` and configure the environment variables required by the application.
+
+Add your own valid API keys and configuration values where needed. Never commit your real `.env` file or expose secret keys on GitHub.
+
+### 4. Set Up the Python Environment
+
+Create and activate a virtual environment.
+
+**Windows PowerShell:**
 
 ```powershell
 python -m venv .venv
-```
-
-Activate it:
-
-```powershell
 .\.venv\Scripts\Activate.ps1
-
-python -m pip install torch torchvision scikit-learn pillow numpy
 ```
 
-Install the Python packages required by the ML code.
+Install the Python packages required by the project. Use your project's dependency file if one is available; otherwise, install the dependencies required by the Python scripts, including the compatible PyTorch and Torchvision versions.
 
-### 4. Configure the API key
+### 5. Start the Application
 
-Create a `.env` file in the project root.
+Check the `scripts` section of `package.json` to identify the available commands.
 
-```env
-GEMINI_API_KEY="your-gemini-api-key"
-```
-
-You can use `.env.example` as a reference.
-
-The Gemini API is used for features such as interface translation and AI-assisted functionality. The local produce grading models do not require a Gemini API key.
-
-**Do not upload your `.env` file or API key to GitHub.**
-
-To load reported mandi prices, add your data.gov.in API key to the same `.env` file:
-
-```env
-MANDI_API_KEY="your-data-gov-in-api-key"
-```
-
-The Market Price page uses the AGMARKNET "Current Daily Price of Various Commodities from Various Markets (Mandi)" dataset through the Express backend. The page checks for updates every five minutes and also has a manual refresh button; this only picks up new data when the provider publishes it. The provider reports daily prices, not live auction bids. Prices are converted from ₹/quintal to ₹/kg. The district modal card is an unweighted average of the returned market modal prices. The source grade (for example, `Local`) is not mapped to the app's produce Grade A/B/C; distance is not provided. The report-history chart only shows dates actually returned by the dataset, and may contain only one day. Restart `npm run dev` after changing `.env`.
-
-Opening mandi prices from an analysis result preselects and locks the analyzed commodity so the request only returns that commodity. The analysis grade is shown for context, but AGMARKNET does not provide the same Grade A/B/C classification, so prices are not grade-adjusted. Dragon fruit is accepted as a commodity selection; the page shows an empty-data message if the source has no matching report.
-
-### 5. Start the application
+For a Vite development server, run:
 
 ```bash
 npm run dev
 ```
 
-Then open:
+If the application requires the Express backend or Python ML service to run separately, start those services using the commands and configuration defined in the project.
 
-```text
-http://localhost:3000
-```
+Once the development server starts, open the local URL displayed in your terminal.
 
-## Main Pages
+## Machine Learning Models
 
-### Landing Page
+Agrisense AI includes trained PyTorch models for agricultural produce analysis.
 
-Introduces the project and explains the main features and workflow.
+| Model | Purpose |
+|---|---|
+| `apple_grade_model.pth` | Apple quality grading |
+| `tomato_grade_model.pth` | Tomato quality grading |
+| `dragonfruit_grade_model.pth` | Dragon fruit quality grading |
+| `fruit_detection_model.pth` | Fruit detection |
 
-### Login / Registration
+The grading models are designed to predict quality categories based on the images they receive. Prediction results depend on image quality, dataset coverage, and model performance.
 
-Users can create an account or log in to the application.
+The model files are stored in `ml/models/`. The corresponding prediction and training scripts are located in the `ml/` directory.
 
-### Dashboard
+## Application Workflow
 
-Shows user information, recent analyses, analysis statistics, and market information.
+1. Open the Agrisense AI web application.
+2. Navigate to the produce analysis section.
+3. Upload an image or use the available camera interface.
+4. Allow the application to process the image.
+5. View the predicted quality grade and confidence information.
+6. Explore other available sections, such as history and market prices.
 
-### Upload & Analysis
+The available workflow depends on the configured backend services and application environment.
 
-Users can select a district and market, upload an image, or capture an image using the camera.
+## API and Backend
 
-### Analysis
+The application includes an Express.js backend and Python services for machine learning integration.
 
-Shows the different stages of the image analysis process.
+- `server.js` — Node.js/Express application server.
+- `ml_server.py` — Python machine learning service.
+- `ml_engine.py` — Machine learning processing and integration logic.
+- `src/hooks/useApiTranslation.js` — Frontend translation integration.
 
-### Result
+API routes, request formats, environment variables, and service ports are defined in the project source code and configuration files.
 
-Displays the predicted grade, quality score, visual quality information, and estimated shelf life.
+## Important Notes
 
-### Market Price
-
-Shows APMC market prices and allows users to compare prices between markets.
-
-### History
-
-Stores and displays previous analysis results.
-
-### Profile
-
-Contains user information and application settings.
-
-## Training the Models
-
-The repository contains the scripts used to train the models.
-
-Apple model:
-
-```bash
-python ml/train.py
-```
-
-Tomato model:
-
-```bash
-python ml/train_tomato.py
-```
-
-Fruit detection model:
-
-```bash
-python ml/train_fruit_detector.py
-```
-
-The training scripts require the appropriate datasets and Python dependencies.
-
-## Supported Languages
-
-The interface currently supports:
-
-* English
-* Hindi
-* Marathi
-
-The language can be changed from the navigation bar.
-
-## Current Limitations
-
-This is still a project under development.
-
-Some of the current limitations are:
-
-* Only apples and tomatoes are supported for grading.
-* The grading models depend on the quality and variety of the training data.
-* Market prices depend on the available data source.
-* Shelf-life estimation is an approximate value and should not be treated as a laboratory measurement.
-* More real-world images are needed to improve the models across different lighting and camera conditions.
+- The project is intended for agricultural produce quality assessment and experimentation.
+- Model predictions are estimates and should not be treated as guaranteed measurements of fruit quality.
+- Prediction confidence is not the same as verified grading accuracy.
+- Market prices and other external information depend on their configured data sources.
+- Do not upload API keys, passwords, private datasets, or other sensitive information to a public repository.
 
 ## Future Improvements
 
-Some improvements planned for the project:
+- Improve model performance with larger and more diverse datasets.
+- Extend support for additional fruits and vegetables.
+- Add more robust image quality checks.
+- Improve prediction evaluation and reporting.
+- Expand multilingual support.
+- Add deployment and automated testing workflows.
 
-* Add more fruits and vegetables
-* Improve the grading models with larger datasets
-* Add disease detection
-* Improve shelf-life prediction
-* Add more Indian languages
-* Connect to live mandi price APIs
-* Improve market price forecasting
-* Add a mobile version
-* Improve authentication and deployment
-* Add more real-world testing
+## Author
 
-## Project Status
+**Yash Sankpal**
 
-The main application, ML grading pipeline, market interface, and multilingual interface are currently under development.
+B.Tech in Computer Science and Engineering
 
-The current trained models support:
-
-```text
-Apple  → Grade A / B / C
-Tomato → Grade A / B / C
-```
+GitHub: [@yashsankpal2727](https://github.com/yashsankpal2727)
 
 ## License
 
-This project is currently developed as an academic/personal project.
-
-A separate open-source license can be added if the project is distributed publicly.
-#   A g r i s e n s e  
- #   A g r i s e n s e - A I  
- 
+A license has not yet been specified. If you intend to make this project open source, choose an appropriate license and add its file to the repository.

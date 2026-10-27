@@ -1,0 +1,6 @@
+{
+  "name": "AgriSense AI - Smart Produce Grading & Market Intelligence",
+  "description": "AI-powered agricultural produce quality grading, shelf-life estimation, and real-time mandi market intelligence for farmers and traders.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -8,7 +8,6 @@ import React, { useState, useEffect } from 'react';
 import { AlertTriangle, Camera, Upload, RotateCcw } from 'lucide-react';
 
 import { Navbar } from './components/Navbar.jsx';
-import { useApiTranslation } from './hooks/useApiTranslation.js';
 import { LandingPage } from './pages/LandingPage.jsx';
 import { AuthPage } from './pages/AuthPage.jsx';
 import { DashboardPage } from './pages/DashboardPage.jsx';
@@ -19,38 +18,17 @@ import { MarketPricePage } from './pages/MarketPricePage.jsx';
 import { HistoryPage } from './pages/HistoryPage.jsx';
 import { ProfilePage } from './pages/ProfilePage.jsx';
 
-const INITIAL_USER = {
-  name: 'Prachi Chougale',
-  phone: '+91 98220 54321',
-  district: 'Kolhapur',
-  state: 'Maharashtra',
-  primaryCrops: ['Tomato', 'Apple', 'Onion'],
-  weather: {
-    temp: '26°C',
-    condition: 'Partly Cloudy',
-    humidity: '68%',
-    wind: '12 km/h',
-  },
-};
-
 export default function App() {
   const [activePage, setActivePage] = useState('landing');
- const [language, setLanguage] = useState(
-  () => localStorage.getItem('agrisense-language') || 'English'
-);
-  const handleLanguageChange = (nextLanguage) => {
-    localStorage.setItem('agrisense-language', nextLanguage);
-    setLanguage(nextLanguage);
-  };
-  const { status: translationStatus, errorMessage: translationError, retry: retryTranslation } = useApiTranslation(language);
 
   const [authTab, setAuthTab] = useState('login');
 
-  const [user, setUser] = useState(INITIAL_USER);
+  const [user, setUser] = useState(null);
 
-  const [district, setDistrict] = useState('Kolhapur');
+  const [district, setDistrict] = useState('');
 
   const [history, setHistory] = useState([]);
+  const [historyError, setHistoryError] = useState('');
 
   const [currentAnalysis, setCurrentAnalysis] = useState(null);
   const historyToken = user?.sessionToken;
@@ -63,8 +41,8 @@ export default function App() {
 
   // Market filter state
   const [marketFilters, setMarketFilters] = useState({
-    commodity: 'Tomato',
-    district: 'Kolhapur',
+    commodity: '',
+    district: '',
     grade: 'A',
     fromAnalysis: false,
   });
@@ -88,6 +66,7 @@ export default function App() {
   useEffect(() => {
     setHistory([]);
     setCurrentAnalysis(null);
+    setHistoryError('');
     if (!historyToken) return undefined;
 
     let cancelled = false;
@@ -103,9 +82,13 @@ export default function App() {
         const analyses = data.status === 'success' ? data.analyses || [] : [];
         setHistory(analyses);
         setCurrentAnalysis(analyses[0] || null);
+        setHistoryError('');
       })
       .catch((err) => {
-        if (!cancelled) console.error('Could not load account history:', err);
+        if (!cancelled) {
+          console.error('Could not load account history:', err);
+          setHistoryError(err.message || 'Could not load your analysis history.');
+        }
       });
 
     return () => {
@@ -126,6 +109,45 @@ export default function App() {
 
     setHistory([]);
     setCurrentAnalysis(null);
+    setHistoryError('');
+  };
+
+  const handleLoginSuccess = (profile) => {
+    setUser(profile);
+    setDistrict(profile.district || '');
+    setMarketFilters((previous) => ({
+      ...previous,
+      commodity: profile.primaryCrops?.[0] || '',
+      district: profile.district || '',
+      fromAnalysis: false,
+    }));
+    setActivePage('dashboard');
+  };
+
+  const handleUpdateUser = async (updated) => {
+    const response = await fetch('/api/user', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${user.sessionToken}`,
+      },
+      body: JSON.stringify({
+        district: updated.district,
+        dailySmsAlerts: updated.dailySmsAlerts,
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok || data.status !== 'success') {
+      throw new Error(data.error || 'Could not save your account preferences.');
+    }
+
+    setUser(data.user);
+    setDistrict(data.user.district);
+    setMarketFilters((previous) => ({
+      ...previous,
+      district: data.user.district,
+    }));
+    return data.user;
   };
 
   // ---------------------------------------------------------
@@ -199,13 +221,13 @@ export default function App() {
     // -------------------------------------------------------
 
     setRejectedAnalysis(null);
-
     setCurrentAnalysis(result);
 
     setHistory((prev) => [
       result,
       ...prev.filter((item) => item.id !== result.id),
     ]);
+    setHistoryError('');
 
     setActivePage('result');
   };
@@ -284,11 +306,6 @@ export default function App() {
       <div className="min-h-screen bg-[#F8FAF7]">
         <LandingPage
           onNavigate={handleNavigate}
-          language={language}
-          onLanguageChange={handleLanguageChange}
-          translationStatus={translationStatus}
-          translationError={translationError}
-          onRetryTranslation={retryTranslation}
         />
       </div>
     );
@@ -304,20 +321,9 @@ export default function App() {
         <AuthPage
           initialTab={authTab}
 
-          onLoginSuccess={(newProfile) => {
-            setUser(newProfile);
-
-            setDistrict(newProfile.district);
-
-            setActivePage('dashboard');
-          }}
+          onLoginSuccess={handleLoginSuccess}
 
           onNavigate={handleNavigate}
-          language={language}
-          onLanguageChange={handleLanguageChange}
-          translationStatus={translationStatus}
-          translationError={translationError}
-          onRetryTranslation={retryTranslation}
         />
       </div>
     );
@@ -335,12 +341,7 @@ export default function App() {
       <Navbar
         activePage={activePage}
         onNavigate={handleNavigate}
-        userName={user.name}
-        language={language}
-        onLanguageChange={handleLanguageChange}
-        translationStatus={translationStatus}
-        translationError={translationError}
-        onRetryTranslation={retryTranslation}
+        userName={user?.name || ''}
       />
 
       {/* Main Viewport */}
@@ -356,7 +357,8 @@ export default function App() {
           {activePage === 'dashboard' && (
             <DashboardPage
               user={user}
-              recentAnalyses={history.slice(0, 5)}
+              recentAnalyses={history}
+              historyError={historyError}
               onNavigate={handleNavigate}
               onSelectAnalysis={handleSelectAnalysis}
             />
@@ -370,14 +372,7 @@ export default function App() {
             <UploadPage
               district={district}
 
-              onDistrictChange={(newDistrict) => {
-                setDistrict(newDistrict);
-
-                setUser((prev) => ({
-                  ...prev,
-                  district: newDistrict,
-                }));
-              }}
+              onDistrictChange={setDistrict}
 
               onStartAnalysis={handleStartAnalysis}
             />
@@ -439,46 +434,6 @@ export default function App() {
                     'The uploaded image does not appear to contain a supported fruit.'}
 
                 </p>
-
-                {/* Supported fruits */}
-
-                <div className="mt-6 bg-white border border-slate-200 rounded-2xl p-5">
-
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-
-                    Supported Produce
-
-                  </p>
-
-                  <div className="mt-4 grid grid-cols-2 gap-3">
-
-                    <div className="flex items-center justify-center gap-2 bg-red-50 border border-red-100 rounded-xl py-3">
-
-                      <span className="text-xl">
-                        🍎
-                      </span>
-
-                      <span className="text-sm font-bold text-slate-800">
-                        Apple
-                      </span>
-
-                    </div>
-
-                    <div className="flex items-center justify-center gap-2 bg-red-50 border border-red-100 rounded-xl py-3">
-
-                      <span className="text-xl">
-                        🍅
-                      </span>
-
-                      <span className="text-sm font-bold text-slate-800">
-                        Tomato
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                </div>
 
                 {/* Technical information */}
 
@@ -605,6 +560,7 @@ export default function App() {
           {activePage === 'history' && (
             <HistoryPage
               history={history}
+              historyError={historyError}
               onSelectAnalysis={handleSelectAnalysis}
               onNavigate={handleNavigate}
               onClearHistory={handleClearHistory}
@@ -619,11 +575,7 @@ export default function App() {
             <ProfilePage
               user={user}
 
-              onUpdateUser={(updated) => {
-                setUser(updated);
-
-                setDistrict(updated.district);
-              }}
+              onUpdateUser={handleUpdateUser}
 
               onNavigate={handleNavigate}
 
@@ -635,15 +587,12 @@ export default function App() {
                   }).catch((error) => console.error('Logout request failed:', error));
                 }
                 setHistory([]);
+                setHistoryError('');
                 setCurrentAnalysis(null);
-                setUser(INITIAL_USER);
+                setUser(null);
+                setDistrict('');
                 handleNavigate('auth', 'login');
               }}
-              language={language}
-              onLanguageChange={handleLanguageChange}
-              translationStatus={translationStatus}
-              translationError={translationError}
-              onRetryTranslation={retryTranslation}
             />
           )}
 

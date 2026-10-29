@@ -15,7 +15,6 @@ import {
   Check,
 } from 'lucide-react';
 import { CameraModal } from '../components/CameraModal.jsx';
-import { SAMPLE_PRODUCE } from '../data/sampleProduce.js';
 
 export const UploadPage = ({
   district,
@@ -39,10 +38,6 @@ export const UploadPage = ({
       };
       reader.readAsDataURL(file);
     }
-  };
-
-  const handleSelectSample = (sample) => {
-    setSelectedImage(sample.imageUrl);
   };
 
   const handleAddMoreImage = (e) => {
@@ -116,6 +111,12 @@ export const UploadPage = ({
                     <option value="Nashik">Nashik (Maharashtra)</option>
                     <option value="Pune">Pune (Maharashtra)</option>
                     <option value="Shimla">Shimla (Himachal Pradesh)</option>
+                    <option value="Sangli">Sangli (Maharashtra)</option>
+                    <option value="Satara">Satara (Maharashtra)</option>
+                    <option value="Solapur">Solapur (Maharashtra)</option>
+                    <option value="Ahmednagar">Ahmednagar (Maharashtra)</option>
+                    <option value="Nagpur">Nagpur (Maharashtra)</option>
+                    <option value="Bengaluru">Bengaluru (Karnataka)</option>
                   </select>
                   <ChevronDown className="w-4 h-4 text-slate-400 absolute right-4 top-3.5 pointer-events-none" />
                 </div>
@@ -285,63 +286,9 @@ export const UploadPage = ({
           </div>
 
           {/* ======================================================== */}
-          {/* RIGHT COLUMN: Instant Samples & Photography Tips         */}
+          {/* RIGHT COLUMN: Photography Tips                           */}
           {/* ======================================================== */}
           <div className="lg:col-span-5 space-y-5">
-            {/* Quick Produce Sample Test Picker */}
-            <div className="bg-white border border-emerald-100 rounded-3xl p-5 shadow-xs space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-emerald-600" />
-                  <span>Instant Test Produce Samples</span>
-                </span>
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                  1-Click Test
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 font-medium">
-                Click any lot below to immediately inspect without uploading:
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5">
-                {SAMPLE_PRODUCE.map((sample) => (
-                  <button
-                    key={sample.id}
-                    type="button"
-                    onClick={() => handleSelectSample(sample)}
-                    className="p-2.5 rounded-2xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200/80 hover:border-emerald-400 text-left transition flex items-center gap-3 group cursor-pointer"
-                  >
-                    <img
-                      src={sample.imageUrl}
-                      alt={sample.name}
-                      className="w-12 h-12 rounded-xl object-cover shrink-0 border border-slate-200"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-extrabold text-slate-900 group-hover:text-emerald-800">
-                          {sample.commodity} ({sample.gradeHint})
-                        </p>
-                        <span
-                          className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
-                            sample.gradeHint === 'A'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : sample.gradeHint === 'B'
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-rose-100 text-rose-800'
-                          }`}
-                        >
-                          Grade {sample.gradeHint}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                        {sample.name}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Inspection Guidelines Accordion/Card */}
             <div className="bg-white border border-emerald-100 rounded-3xl p-5 shadow-xs space-y-3">
               <div className="flex items-center gap-2 text-xs font-extrabold text-emerald-950 uppercase tracking-wide">

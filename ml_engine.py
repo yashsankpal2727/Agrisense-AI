@@ -8,6 +8,8 @@ import os
 from pathlib import Path
 
 # pyrefly: ignore [missing-import]
+import numpy as np
+# pyrefly: ignore [missing-import]
 import torch
 # pyrefly: ignore [missing-import]
 from torchvision import models, transforms
@@ -62,6 +64,11 @@ FRUIT_DISPLAY_NAMES = {
     "tomato": "Tomato",
     "dragonfruit": "Dragon Fruit"
 }
+
+MIN_FRUIT_DETECTION_CONFIDENCE = 80.0
+MIN_FRUIT_DETECTION_MARGIN = 20.0
+MIN_IMAGE_COLOR_VARIATION = 8.0
+MAX_IMAGE_NEIGHBOR_DIFFERENCE = 45.0
 
 
 # ============================================================
@@ -229,6 +236,18 @@ def detect_fruit(image):
 
     model, classes = load_fruit_detection_model()
 
+    image_sample = np.asarray(
+        image.convert("RGB").resize((224, 224)),
+        dtype=np.float32
+    )
+    color_variation = float(image_sample.std())
+    neighbor_difference = float(
+        (
+            np.abs(image_sample[:, 1:] - image_sample[:, :-1]).mean()
+            + np.abs(image_sample[1:, :] - image_sample[:-1, :]).mean()
+        ) / 2
+    )
+
     image_tensor = IMAGE_TRANSFORM(
         image
     ).unsqueeze(0).to(DEVICE)
@@ -249,11 +268,23 @@ def detect_fruit(image):
     ).item()
 
     detected_fruit = classes[predicted_index]
-
-    confidence = (
-        probabilities[
-            predicted_index
-        ].item() * 100
+    sorted_probabilities = torch.sort(
+        probabilities,
+        descending=True
+    ).values
+    confidence = float(sorted_probabilities[0].item() * 100)
+    confidence_margin = float(
+        (sorted_probabilities[0] - sorted_probabilities[1]).item() * 100
+    )
+    image_quality_ok = (
+        color_variation >= MIN_IMAGE_COLOR_VARIATION
+        and neighbor_difference <= MAX_IMAGE_NEIGHBOR_DIFFERENCE
+    )
+    is_supported = (
+        image_quality_ok
+        and detected_fruit != "other"
+        and confidence >= MIN_FRUIT_DETECTION_CONFIDENCE
+        and confidence_margin >= MIN_FRUIT_DETECTION_MARGIN
     )
 
     fruit_probabilities = {
@@ -272,6 +303,19 @@ def detect_fruit(image):
             confidence,
             2
         ),
+
+        "confidence_margin": round(
+            confidence_margin,
+            2
+        ),
+
+        "is_supported": is_supported,
+
+        "image_quality": {
+            "color_variation": round(color_variation, 2),
+            "neighbor_difference": round(neighbor_difference, 2),
+            "passes_basic_checks": image_quality_ok
+        },
 
         "probabilities": fruit_probabilities
     }
@@ -743,84 +787,63 @@ def run_grading_pipeline(
         or "auto"
     ).lower().strip()
 
-    detection = None
+    detection = detect_fruit(image)
+    detected_fruit = detection["fruit"]
+    supported_commodities = [
+        "apple",
+        "tomato",
+        "dragonfruit",
+        "dragon fruit"
+    ]
 
-    # ========================================================
-    # AUTO DETECTION
-    # ========================================================
+    if not detection["is_supported"]:
+        return {
+            "status": "rejected",
+            "commodity": "Other",
+            "grade": None,
+            "confidence": detection["confidence"],
+            "message": (
+                "The image is unsupported or could not be confidently "
+                "identified as a clear supported fruit. Please upload a "
+                "clear Apple, Tomato, or Dragon Fruit image."
+            ),
+            "fruit_detection": detection,
+            "technical_inspection": {
+                "pipeline": (
+                    "Fruit Detection → "
+                    "Unsupported or Low-Confidence Rejection"
+                ),
+                "model": "fruit_detection_model.pth",
+                "image_resolution": f"{image.width}x{image.height}"
+            }
+        }
 
     if commodity == "auto":
-
-        detection = detect_fruit(
-            image
-        )
-
-        detected_fruit = detection[
-            "fruit"
-        ]
-
-        detection_confidence = detection[
-            "confidence"
-        ]
-
-        # ----------------------------------------------------
-        # OTHER = REJECT
-        # ----------------------------------------------------
-
-        if detected_fruit == "other":
-
-            return {
-
-                "status": "rejected",
-
-                "commodity": "Other",
-
-                "grade": None,
-
-                "confidence": detection_confidence,
-
-                "message": (
-                    "The uploaded image does not appear "
-                    "to contain a supported fruit. "
-                    "Please upload an Apple, Tomato, or Dragon Fruit image."
-                ),
-
-                "fruit_detection": detection,
-
-                "technical_inspection": {
-
-                    "pipeline": (
-                        "Fruit Detection → "
-                        "Unsupported Fruit Rejection"
-                    ),
-
-                    "model": (
-                        "fruit_detection_model.pth"
-                    ),
-
-                    "image_resolution": (
-                        f"{image.width}x{image.height}"
-                    )
-                }
-            }
-
         commodity = detected_fruit
-
-    # ========================================================
-    # MANUAL MODE
-    # ========================================================
-
-    elif commodity not in [
-    "apple",
-    "tomato",
-    "dragonfruit",
-    "dragon fruit"
-   ]:
-
+    elif commodity not in supported_commodities:
         raise ValueError(
             "Unsupported commodity. "
             "Use auto, Apple, Tomato, or Dragon Fruit."
         )
+    elif commodity != detected_fruit:
+        return {
+            "status": "rejected",
+            "commodity": "Other",
+            "grade": None,
+            "confidence": detection["confidence"],
+            "message": (
+                f"The image appears to contain "
+                f"{FRUIT_DISPLAY_NAMES.get(detected_fruit, detected_fruit)}, "
+                f"not {FRUIT_DISPLAY_NAMES.get(commodity, commodity)}. "
+                "Select the detected fruit or use Auto Detect."
+            ),
+            "fruit_detection": detection,
+            "technical_inspection": {
+                "pipeline": "Fruit Detection → Commodity Mismatch Rejection",
+                "model": "fruit_detection_model.pth",
+                "image_resolution": f"{image.width}x{image.height}"
+            }
+        }
 
     # ========================================================
     # GRADE PREDICTION
@@ -984,16 +1007,7 @@ def run_grading_pipeline(
         }
     }
 
-    # Add fruit detection information when
-    # automatic detection was used.
-
-    if (
-        commodity_hint
-        and commodity_hint.lower().strip() == "auto"
-        and detection is not None
-    ):
-
-        result["fruit_detection"] = detection
+    result["fruit_detection"] = detection
 
     return result
 

@@ -1,5 +1,4 @@
 import React from 'react';
-import { LanguageSelect } from '../components/LanguageSelect.jsx';
 import {
   Leaf,
   Scan,
@@ -12,10 +11,9 @@ import {
   Sparkles,
   BarChart3,
   Clock,
-  ChevronRight,
 } from 'lucide-react';
 
-export const LandingPage = ({ onNavigate, language, onLanguageChange, translationStatus, translationError, onRetryTranslation }) => {
+export const LandingPage = ({ onNavigate }) => {
   return (
     <div className="min-h-screen bg-[#F8FAF7] text-slate-800 flex flex-col">
       {/* Top Header */}
@@ -36,13 +34,6 @@ export const LandingPage = ({ onNavigate, language, onLanguageChange, translatio
           </div>
 
           <div className="flex items-center gap-3">
-            <LanguageSelect
-              language={language}
-              onChange={onLanguageChange}
-              status={translationStatus}
-              errorMessage={translationError}
-              onRetry={onRetryTranslation}
-            />
             <button
               onClick={() => onNavigate('auth', 'login')}
               className="px-5 py-2.5 rounded-xl border-2 border-emerald-700 text-emerald-800 font-bold text-sm hover:bg-emerald-50 transition cursor-pointer shadow-xs"
@@ -111,7 +102,7 @@ export const LandingPage = ({ onNavigate, language, onLanguageChange, translatio
                   </div>
                   <div className="flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>APMC Mandi Verified</span>
+                    <span>Reported APMC Prices</span>
                   </div>
                 </div>
               </div>
@@ -130,12 +121,9 @@ export const LandingPage = ({ onNavigate, language, onLanguageChange, translatio
                         <Leaf className="w-4 h-4 text-emerald-200" />
                       </div>
                       <span className="text-xs font-bold uppercase tracking-wider text-emerald-100">
-                        Live Produce Scan
+                        Produce Scan Preview
                       </span>
                     </div>
-                    <span className="text-xs font-semibold bg-emerald-400/20 text-emerald-200 px-2 py-0.5 rounded-full border border-emerald-300/30">
-                      Kolhapur APMC
-                    </span>
                   </div>
 
                   {/* Produce Preview Box */}
@@ -145,29 +133,12 @@ export const LandingPage = ({ onNavigate, language, onLanguageChange, translatio
                       alt="Fresh Harvest Tomatoes"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg text-[11px] font-bold text-white flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                      <span>Quality 87 / 100</span>
-                    </div>
-                    <div className="absolute bottom-3 right-3 bg-emerald-700/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-black text-white shadow-lg border border-emerald-400/30">
-                      Grade A Premium
-                    </div>
                   </div>
 
-                  {/* Quick Card Metrics */}
                   <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 border border-white/15 space-y-2">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-emerald-100 font-medium">Lycopene Color Balance</span>
-                      <span className="font-bold">90%</span>
-                    </div>
-                    <div className="w-full bg-white/20 rounded-full h-1.5">
-                      <div className="bg-emerald-300 h-1.5 rounded-full" style={{ width: '90%' }} />
-                    </div>
-
-                    <div className="flex justify-between items-center text-xs pt-1">
-                      <span className="text-emerald-100 font-medium">Estimated Shelf Life</span>
-                      <span className="font-bold text-emerald-200">4 - 5 Days</span>
-                    </div>
+                    <p className="text-xs text-emerald-100 font-medium text-center">
+                      Analysis results appear after you upload your own produce photo.
+                    </p>
                   </div>
 
                   {/* Bottom Instant Try CTA */}
@@ -359,21 +330,6 @@ export const LandingPage = ({ onNavigate, language, onLanguageChange, translatio
                   </div>
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-3 gap-2 text-center text-xs">
-                  <div className="bg-emerald-50 p-2.5 rounded-xl border border-emerald-100">
-                    <span className="font-extrabold text-emerald-800">Grade A</span>
-                    <p className="text-[10px] text-slate-600 mt-0.5">₹32 - ₹36/kg</p>
-                  </div>
-                  <div className="bg-amber-50 p-2.5 rounded-xl border border-amber-100">
-                    <span className="font-extrabold text-amber-800">Grade B</span>
-                    <p className="text-[10px] text-slate-600 mt-0.5">₹28 - ₹32/kg</p>
-                  </div>
-                  <div className="bg-rose-50 p-2.5 rounded-xl border border-rose-100">
-                    <span className="font-extrabold text-rose-800">Grade C</span>
-                    <p className="text-[10px] text-slate-600 mt-0.5">₹22 - ₹26/kg</p>
-                  </div>
-                </div>
-
                 <p className="text-xs text-slate-600 mt-3 font-medium">
                   • Lycopene color development, shoulder yellowing, blossom-end rot, skin elasticity,
                   cracking, and transport firmness.
@@ -399,21 +355,6 @@ export const LandingPage = ({ onNavigate, language, onLanguageChange, translatio
                   </div>
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-3 gap-2 text-center text-xs">
-                  <div className="bg-emerald-50 p-2.5 rounded-xl border border-emerald-100">
-                    <span className="font-extrabold text-emerald-800">Grade A</span>
-                    <p className="text-[10px] text-slate-600 mt-0.5">₹130 - ₹165/kg</p>
-                  </div>
-                  <div className="bg-amber-50 p-2.5 rounded-xl border border-amber-100">
-                    <span className="font-extrabold text-amber-800">Grade B</span>
-                    <p className="text-[10px] text-slate-600 mt-0.5">₹105 - ₹125/kg</p>
-                  </div>
-                  <div className="bg-rose-50 p-2.5 rounded-xl border border-rose-100">
-                    <span className="font-extrabold text-rose-800">Grade C</span>
-                    <p className="text-[10px] text-slate-600 mt-0.5">₹70 - ₹95/kg</p>
-                  </div>
-                </div>
-
                 <p className="text-xs text-slate-600 mt-3 font-medium">
                   • Crimson blush percentage, lenticel density, russeting threshold, stem cavity
                   soundness, and pressure tolerance for cold storage.
@@ -423,65 +364,6 @@ export const LandingPage = ({ onNavigate, language, onLanguageChange, translatio
           </div>
         </section>
 
-        {/* How It Works for Farmers & Mandi Traders */}
-        <section className="py-14 px-4 sm:px-6 bg-white border-t border-emerald-100">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center max-w-2xl mx-auto mb-10">
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                Simple 3-Step Farmer Workflow
-              </h2>
-              <p className="text-sm sm:text-base text-slate-600 mt-2 font-medium">
-                No complex equipment or calibration needed. Works directly on any smartphone.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="p-6 rounded-3xl bg-[#F8FAF7] border border-emerald-100 space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 font-extrabold text-lg flex items-center justify-center">
-                  1
-                </div>
-                <h3 className="text-base font-bold text-slate-900">Capture or Upload Produce</h3>
-                <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                  Take a photo of your fresh crate, bulk lot, or individual produce using good ambient
-                  daylight.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-3xl bg-[#F8FAF7] border border-emerald-100 space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 font-extrabold text-lg flex items-center justify-center">
-                  2
-                </div>
-                <h3 className="text-base font-bold text-slate-900">Instant AI Inspection</h3>
-                <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                  Our deep learning engine extracts color histograms, surface texture, defect patches,
-                  and assigns Grade A/B/C.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-3xl bg-[#F8FAF7] border border-emerald-100 space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 font-extrabold text-lg flex items-center justify-center">
-                  3
-                </div>
-                <h3 className="text-base font-bold text-slate-900">Unlock Fair Market Prices</h3>
-                <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                  Compare mandi bids across nearby APMC yards (Market A vs B vs C) and sell at maximum
-                  profit.
-                </p>
-              </div>
-            </div>
-
-            {/* Bottom Final CTA */}
-            <div className="mt-12 text-center">
-              <button
-                onClick={() => onNavigate('auth', 'register')}
-                className="px-8 py-4 rounded-2xl bg-emerald-800 hover:bg-emerald-900 text-white font-extrabold text-base shadow-lg shadow-emerald-800/25 transition cursor-pointer inline-flex items-center gap-2"
-              >
-                <span>Launch AgriSense AI Dashboard</span>
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </section>
       </main>
 
       {/* Footer */}

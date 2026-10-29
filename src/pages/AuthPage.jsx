@@ -1,4 +1,3 @@
-import { LanguageSelect } from '../components/LanguageSelect.jsx';
 import React, { useState, useEffect } from 'react';
 import {
   Leaf,
@@ -12,7 +11,6 @@ import {
   EyeOff,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
   ArrowLeft,
   Wheat,
   Check,
@@ -33,7 +31,7 @@ const DISTRICT_LIST = [
   { name: 'Bengaluru', state: 'Karnataka', apmc: 'Yeshwanthpur APMC Yard' },
 ];
 
-export const AuthPage = ({ initialTab = 'login', onLoginSuccess, onNavigate, language, onLanguageChange, translationStatus, translationError, onRetryTranslation }) => {
+export const AuthPage = ({ initialTab = 'login', onLoginSuccess, onNavigate }) => {
   const [tab, setTab] = useState(initialTab);
 
   // Login Form States
@@ -45,7 +43,8 @@ export const AuthPage = ({ initialTab = 'login', onLoginSuccess, onNavigate, lan
   // Register Form States (Requested: full name, phone number, district, create new password, conform password)
   const [regFullName, setRegFullName] = useState('');
   const [regPhone, setRegPhone] = useState('');
-  const [regDistrict, setRegDistrict] = useState('Kolhapur');
+  const [regDistrict, setRegDistrict] = useState('');
+  const [regPrimaryCrop, setRegPrimaryCrop] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [regAgreeTerms, setRegAgreeTerms] = useState(true);
@@ -85,22 +84,6 @@ export const AuthPage = ({ initialTab = 'login', onLoginSuccess, onNavigate, lan
     return { label: 'Good password', color: 'bg-amber-500', width: 'w-2/3' };
   };
 
-  // 1-Click Demo Login
-  const handleQuickDemo = async () => {
-    setIsLoading(true);
-    setErrorMessage('');
-    try {
-      const response = await fetch('/api/auth/demo', { method: 'POST' });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Demo login failed.');
-      onLoginSuccess({ ...result.user, sessionToken: result.sessionToken });
-    } catch (error) {
-      setErrorMessage(error.message || 'Could not start demo login.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Fill credentials for easy test
   // Handle Login Submission
   const handleLoginSubmit = async (e) => {
@@ -133,7 +116,6 @@ export const AuthPage = ({ initialTab = 'login', onLoginSuccess, onNavigate, lan
       onLoginSuccess({
         ...result.user,
         sessionToken: result.sessionToken,
-        weather: { temp: '26°C', condition: 'Clear Sky', humidity: '65%', wind: '10 km/h' },
       });
     } catch (error) {
       setErrorMessage(error.message || 'Could not log in right now.');
@@ -191,6 +173,8 @@ export const AuthPage = ({ initialTab = 'login', onLoginSuccess, onNavigate, lan
           name: regFullName.trim(),
           phone: cleanPhone,
           district: regDistrict,
+          primaryCrop: regPrimaryCrop,
+          dailySmsAlerts: regAgreeTerms,
           password: regPassword,
         }),
       });
@@ -199,7 +183,6 @@ export const AuthPage = ({ initialTab = 'login', onLoginSuccess, onNavigate, lan
       const newProfile = {
         ...result.user,
         sessionToken: result.sessionToken,
-        weather: { temp: '26°C', condition: 'Clear Sky', humidity: '64%', wind: '10 km/h' },
       };
       setSuccessMessage(`Welcome, ${newProfile.name}! Your account has been registered successfully.`);
       setTimeout(() => onLoginSuccess(newProfile), 700);
@@ -216,15 +199,6 @@ export const AuthPage = ({ initialTab = 'login', onLoginSuccess, onNavigate, lan
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F2F7F2] via-[#F8FAF7] to-[#EEF5EE] flex flex-col justify-center py-10 px-4 sm:px-6 relative">
-      <div className="absolute top-4 right-4 z-20">
-        <LanguageSelect
-          language={language}
-          onChange={onLanguageChange}
-          status={translationStatus}
-          errorMessage={translationError}
-          onRetry={onRetryTranslation}
-        />
-      </div>
       {/* Background Decorative Blur Orbs */}
       <div className="absolute top-12 left-1/2 -translate-x-1/2 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-72 h-72 bg-green-500/10 rounded-full blur-2xl pointer-events-none" />
@@ -258,7 +232,7 @@ export const AuthPage = ({ initialTab = 'login', onLoginSuccess, onNavigate, lan
           <div className="flex items-center justify-center gap-2 pt-1">
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md">
               <Check className="w-3 h-3 text-emerald-600" />
-              <span>APMC Verified</span>
+              <span>APMC Price Reports</span>
             </span>
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md">
               <Check className="w-3 h-3 text-emerald-600" />
@@ -268,28 +242,6 @@ export const AuthPage = ({ initialTab = 'login', onLoginSuccess, onNavigate, lan
               <Check className="w-3 h-3 text-emerald-600" />
               <span>Free for Farmers</span>
             </span>
-          </div>
-        </div>
-
-        {/* 1-Click Instant Demo Login Banner */}
-        <div className="bg-gradient-to-r from-emerald-500/10 via-emerald-50 to-green-600/10 border-2 border-dashed border-emerald-300 rounded-2xl p-4 text-center shadow-xs">
-          <div className="flex items-center justify-center gap-1.5 text-xs font-extrabold text-emerald-900 mb-1">
-            <Sparkles className="w-4 h-4 text-emerald-700" />
-            <span>Instant Demo Farmer Access</span>
-          </div>
-          <p className="text-[11px] text-emerald-800/90 mb-3">
-            Quickly test the complete app as <strong>Prachi Chougale</strong> (Kolhapur APMC Mandi)
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleQuickDemo}
-              disabled={isLoading}
-              className="flex-1 py-2.5 px-4 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-700/25 transition cursor-pointer flex items-center justify-center gap-2"
-            >
-              <span>One-Click Demo Login</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
           </div>
         </div>
 
@@ -473,7 +425,7 @@ export const AuthPage = ({ initialTab = 'login', onLoginSuccess, onNavigate, lan
                     value={regFullName}
                     onChange={(e) => setRegFullName(e.target.value)}
                     required
-                    placeholder="e.g. Ramesh Patil / Prachi Chougale"
+                    placeholder="e.g. Ramesh Patil"
                     className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-slate-400 text-slate-900"
                   />
                 </div>
@@ -616,6 +568,7 @@ export const AuthPage = ({ initialTab = 'login', onLoginSuccess, onNavigate, lan
                     required
                     className="w-full pl-10 pr-8 py-2.5 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all cursor-pointer text-slate-900 appearance-none"
                   >
+                    <option value="" disabled>Select your district</option>
                     {DISTRICT_LIST.map((dist) => (
                       <option key={dist.name} value={dist.name}>
                         {dist.name} ({dist.state}) — {dist.apmc}
@@ -629,6 +582,24 @@ export const AuthPage = ({ initialTab = 'login', onLoginSuccess, onNavigate, lan
                 <p className="text-[11px] text-slate-500 mt-1">
                   Connects you to nearest APMC mandi benchmark rates & buyer bids.
                 </p>
+              </div>
+
+              {/* Primary produce */}
+              <div>
+                <label className="block text-xs font-extrabold text-slate-800 mb-1.5">
+                  Primary Produce <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={regPrimaryCrop}
+                  onChange={(e) => setRegPrimaryCrop(e.target.value)}
+                  required
+                  className="w-full px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/10 outline-none cursor-pointer text-slate-900"
+                >
+                  <option value="" disabled>Select your primary produce</option>
+                  <option value="Tomato">Tomato</option>
+                  <option value="Apple">Apple</option>
+                  <option value="Dragon Fruit">Dragon Fruit</option>
+                </select>
               </div>
 
               {/* Terms and Mandi Alerts agreement */}
@@ -713,20 +684,10 @@ export const AuthPage = ({ initialTab = 'login', onLoginSuccess, onNavigate, lan
             </div>
 
             <div className="space-y-2 text-xs text-slate-600">
-              <p>Password reset is not available yet. Use the one-click demo access to explore the app.</p>
+              <p>Password reset is not available yet. Please contact support if you cannot access your account.</p>
             </div>
 
             <div className="flex items-center gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  handleQuickDemo();
-                  setShowForgotModal(false);
-                }}
-                className="flex-1 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition cursor-pointer"
-              >
-                One-Click Demo Login
-              </button>
               <button
                 type="button"
                 onClick={() => setShowForgotModal(false)}

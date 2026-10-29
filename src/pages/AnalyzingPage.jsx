@@ -60,6 +60,25 @@ export const AnalyzingPage = ({
       throw new Error('Invalid image format');
     };
 
+    const createPreviewDataURL = (imageData) =>
+      new Promise((resolve, reject) => {
+        const previewImage = new Image();
+        previewImage.onload = () => {
+          const maxDimension = 512;
+          const scale = Math.min(
+            1,
+            maxDimension / Math.max(previewImage.naturalWidth, previewImage.naturalHeight)
+          );
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(previewImage.naturalWidth * scale));
+          canvas.height = Math.max(1, Math.round(previewImage.naturalHeight * scale));
+          canvas.getContext('2d').drawImage(previewImage, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', 0.75));
+        };
+        previewImage.onerror = () => reject(new Error('Unable to prepare image preview'));
+        previewImage.src = imageData;
+      });
+
     const fetchAnalysis = async () => {
       try {
         console.log('====================================');
@@ -77,6 +96,7 @@ export const AnalyzingPage = ({
 
         // Convert image to guaranteed Base64 data URL
         const imageData = await convertToDataURL(image);
+        const previewImage = await createPreviewDataURL(imageData);
 
         console.log('Converted image successfully');
         console.log('Final image length:', imageData.length);
@@ -90,6 +110,7 @@ export const AnalyzingPage = ({
           },
           body: JSON.stringify({
             image: imageData,
+            previewImage,
             commodity,
             district,
             market,

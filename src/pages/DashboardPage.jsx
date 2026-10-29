@@ -1,83 +1,114 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   MapPin,
-  Sun,
   Camera,
   ChevronRight,
   TrendingUp,
   Sparkles,
   ArrowUpRight,
   Clock,
-  ShieldCheck,
-  AlertCircle,
   Scan,
   Award,
-  BarChart3,
   Leaf,
-  Layers,
-  CheckCircle2,
 } from 'lucide-react';
 
 export const DashboardPage = ({
   user,
   recentAnalyses = [],
+  historyError = '',
   onNavigate,
   onSelectAnalysis,
 }) => {
-  // Compute stats
-  const totalScans = 24;
-  const bestPrice = user?.primaryCrops?.includes('Apple') ? '₹140/kg' : '₹34/kg';
-  const primaryDistrict = user?.district || 'Kolhapur';
+  const [marketData, setMarketData] = useState(null);
+  const [marketError, setMarketError] = useState('');
+  const primaryCommodity = user?.primaryCrops?.[0] || '';
+  const primaryDistrict = user?.district || '';
+  const weekStart = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const monthStart = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const thisWeekCount = recentAnalyses.filter(
+    (item) => new Date(item.timestamp).getTime() >= weekStart
+  ).length;
+  const recentMonthAnalyses = recentAnalyses.filter(
+    (item) => new Date(item.timestamp).getTime() >= monthStart
+  );
+  const scores = recentAnalyses
+    .map((item) => Number(item.qualityScore))
+    .filter(Number.isFinite);
+  const averageScore = scores.length
+    ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length)
+    : null;
+  const gradeCounts = ['A', 'B', 'C'].reduce((counts, grade) => {
+    counts[grade] = recentMonthAnalyses.filter((item) => item.grade === grade).length;
+    return counts;
+  }, {});
+  const gradeTotal = Object.values(gradeCounts).reduce((sum, count) => sum + count, 0);
+  const activeMarkets = new Set(recentAnalyses.map((item) => item.market).filter(Boolean)).size;
+  const recentList = recentAnalyses.slice(0, 5);
+  const currentMarketData =
+    marketData?.commodity === primaryCommodity &&
+    marketData?.district === primaryDistrict
+      ? marketData
+      : null;
+
+  useEffect(() => {
+    if (!primaryCommodity || !primaryDistrict) {
+      setMarketData(null);
+      setMarketError('');
+      return undefined;
+    }
+
+    const controller = new AbortController();
+    const loadMarketData = async () => {
+      setMarketError('');
+      try {
+        const query = new URLSearchParams({
+          commodity: primaryCommodity,
+          district: primaryDistrict,
+        });
+        const response = await fetch(`/api/market-prices?${query}`, {
+          signal: controller.signal,
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Could not load mandi prices.');
+        }
+        setMarketData(data);
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          setMarketError(error.message || 'Could not load mandi prices.');
+          setMarketData(null);
+        }
+      }
+    };
+
+    loadMarketData();
+    return () => controller.abort();
+  }, [primaryCommodity, primaryDistrict]);
 
   return (
     <div className="w-full space-y-6">
-      {/* Top Greeting & Weather Header */}
+      {/* Top Greeting Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-emerald-100/70">
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 uppercase tracking-wider">
             <span>Welcome Back</span>
             <span className="text-base">👋</span>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">
-              APMC Verified Farmer
-            </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1 font-['Space_Grotesk']">
-            {user?.name || 'Prachi Chougale'}
+            {user?.name || 'Farmer'}
           </h1>
           <div className="flex items-center gap-2 text-xs text-slate-500 font-medium mt-1">
             <div className="flex items-center gap-1 text-slate-600">
               <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span>
-                {primaryDistrict}, {user?.state || 'Maharashtra'}
-              </span>
+              <span>{[primaryDistrict, user?.state].filter(Boolean).join(', ') || 'Location not set'}</span>
             </div>
           </div>
         </div>
 
-        {/* Right side: Weather widget */}
         <div className="flex items-center gap-3">
-          <div className="bg-white rounded-2xl p-3 px-4 border border-emerald-100/80 shadow-xs flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-500 shrink-0">
-              <Sun className="w-5 h-5 fill-amber-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-extrabold text-slate-900 font-['Space_Grotesk']">
-                  {user?.weather?.temp || '26°C'}
-                </span>
-                <span className="text-[10px] font-bold text-slate-500">
-                  {user?.weather?.condition || 'Partly Cloudy'}
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-400 font-medium">
-                Humidity {user?.weather?.humidity || '68%'} · Wind {user?.weather?.wind || '12 km/h'}
-              </p>
-            </div>
-          </div>
-
           <button
             onClick={() => onNavigate('upload')}
-            className="hidden md:inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-extrabold shadow-md shadow-emerald-800/20 transition cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-extrabold shadow-md shadow-emerald-800/20 transition cursor-pointer"
           >
             <Camera className="w-4 h-4" />
             <span>New Scan</span>
@@ -91,17 +122,17 @@ export const DashboardPage = ({
         <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs hover:border-emerald-200 transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-              Total Analyses
+              Saved Analyses
             </span>
             <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
               <Scan className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl sm:text-3xl font-black text-indigo-700 font-['Space_Grotesk'] mt-2">
-            {totalScans}
+            {recentAnalyses.length}
           </div>
           <p className="text-[11px] text-slate-500 font-medium mt-1">
-            +4 scanned this week
+            {thisWeekCount} in the last 7 days
           </p>
         </div>
 
@@ -109,7 +140,7 @@ export const DashboardPage = ({
         <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs hover:border-emerald-200 transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-              Average Grade
+              Most Common Grade
             </span>
             <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <Award className="w-4 h-4" />
@@ -117,12 +148,16 @@ export const DashboardPage = ({
           </div>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl sm:text-3xl font-black text-emerald-700 font-['Space_Grotesk']">
-              Grade A
+              {gradeTotal
+                ? `Grade ${Object.keys(gradeCounts).sort((a, b) => gradeCounts[b] - gradeCounts[a])[0]}`
+                : '—'}
             </span>
-            <span className="text-xs font-extrabold text-emerald-600">89% Avg</span>
+            <span className="text-xs font-extrabold text-emerald-600">
+              {averageScore === null ? '—' : `${averageScore}/100`}
+            </span>
           </div>
           <p className="text-[11px] text-emerald-700 font-medium mt-1">
-            92% Premium Quality Lot
+            {gradeTotal ? `${gradeTotal} analyses in the last 30 days` : 'Complete a scan to see your grade'}
           </p>
         </div>
 
@@ -130,17 +165,19 @@ export const DashboardPage = ({
         <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs hover:border-emerald-200 transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-              Top Mandi Rate
+              Current Mandi Rate
             </span>
             <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl sm:text-3xl font-black text-emerald-900 font-['Space_Grotesk'] mt-2">
-            {bestPrice}
+            {currentMarketData?.summary?.modal == null
+              ? '—'
+              : `₹${Number(currentMarketData.summary.modal).toFixed(2)}/kg`}
           </div>
           <p className="text-[11px] text-emerald-800 font-medium mt-1">
-            +8% higher than standard
+            {marketError || currentMarketData?.dataDate || 'No reported rate available'}
           </p>
         </div>
 
@@ -148,17 +185,17 @@ export const DashboardPage = ({
         <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs hover:border-emerald-200 transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-              Active APMC Mandi
+              Your APMC District
             </span>
             <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
               <MapPin className="w-4 h-4" />
             </div>
           </div>
           <div className="text-base sm:text-lg font-black text-slate-900 mt-2 truncate font-['Space_Grotesk']">
-            {primaryDistrict} APMC
+            {primaryDistrict ? `${primaryDistrict} APMC` : '—'}
           </div>
           <p className="text-[11px] text-slate-500 font-medium mt-1">
-            3 Yards reporting live
+            {activeMarkets} markets in your analyses
           </p>
         </div>
       </div>
@@ -184,11 +221,11 @@ export const DashboardPage = ({
               </div>
 
               <h2 className="text-xl sm:text-2xl font-black tracking-tight leading-snug">
-                Instant Produce Quality Grading & Mandi Price Valuation
+                Produce Quality Grading & Mandi Price Reports
               </h2>
               <p className="text-xs sm:text-sm text-emerald-100/90 font-medium leading-relaxed">
-                Take or upload a photo of fresh Tomato crate lots or Apple harvests to instantly detect
-                Grade A, B, or C, estimated shelf life, and best mandi bids.
+                Take or upload a photo of your produce to detect its grade, estimate shelf life, and
+                compare reported mandi prices.
               </p>
 
               <div className="flex flex-wrap items-center gap-3 pt-2">
@@ -204,7 +241,7 @@ export const DashboardPage = ({
                   className="px-4 py-3 rounded-xl bg-emerald-700/60 hover:bg-emerald-700/80 border border-emerald-500/40 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <TrendingUp className="w-4 h-4 text-emerald-300" />
-                  <span>View Mandi Prices</span>
+                  <span>View Reported Mandi Prices</span>
                 </button>
               </div>
             </div>
@@ -212,13 +249,18 @@ export const DashboardPage = ({
 
           {/* Recent Analyses Section */}
           <div className="space-y-3.5">
+            {historyError && (
+              <p role="alert" className="text-sm font-semibold text-rose-700">
+                {historyError}
+              </p>
+            )}
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
                   Recent Quality Evaluations
                 </h3>
                 <p className="text-xs text-slate-500 font-medium">
-                  Verified scans with assigned quality grade and realized APMC rates
+                  Your latest produce analyses
                 </p>
               </div>
               <button
@@ -231,7 +273,15 @@ export const DashboardPage = ({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {recentAnalyses.map((item) => {
+              {recentList.length === 0 && (
+                <div className="sm:col-span-2 bg-white rounded-2xl p-6 border border-slate-200 text-center">
+                  <p className="text-sm font-bold text-slate-700">No analyses yet</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Your scans will appear here after you analyze produce.
+                  </p>
+                </div>
+              )}
+              {recentList.map((item) => {
                 const isGradeA = item.grade === 'A';
                 const isGradeB = item.grade === 'B';
                 const badgeColor = isGradeA
@@ -287,13 +337,8 @@ export const DashboardPage = ({
                       </div>
                     </div>
 
-                    <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between">
-                      <span className="text-[11px] text-slate-500 font-medium">Modal Price</span>
-                      <div className="text-right">
-                        <span className="text-sm font-black text-emerald-800 font-['Space_Grotesk']">
-                          ₹{item.prices?.modal}/kg
-                        </span>
-                      </div>
+                    <div className="mt-2.5 pt-2 border-t border-slate-100 text-[11px] text-slate-500">
+                      Market: {item.market || item.district || '—'}
                     </div>
                   </div>
                 );
@@ -318,10 +363,10 @@ export const DashboardPage = ({
                 </div>
                 <div>
                   <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">
-                    Live APMC Benchmark
+                    Latest APMC Reports
                   </h4>
                   <p className="text-[10px] text-slate-500 font-medium">
-                    {primaryDistrict} Mandi Yard
+                    {primaryDistrict || 'Your district'} Mandi Yard
                   </p>
                 </div>
               </div>
@@ -329,26 +374,21 @@ export const DashboardPage = ({
             </div>
 
             <div className="bg-emerald-50/70 p-3.5 rounded-2xl border border-emerald-100/90">
-              <div className="flex justify-between items-baseline">
-                <span className="text-xs font-bold text-emerald-950">Tomato (Grade A)</span>
+              <div className="flex justify-between items-baseline gap-2">
+                <span className="text-xs font-bold text-emerald-950">
+                  {primaryCommodity || 'Primary produce'}
+                </span>
                 <span className="text-base font-black text-emerald-800 font-['Space_Grotesk']">
-                  ₹32 - ₹36/kg
+                  {currentMarketData?.summary
+                    ? `₹${Number(currentMarketData.summary.min).toFixed(2)} – ₹${Number(currentMarketData.summary.max).toFixed(2)}/kg`
+                    : '—'}
                 </span>
               </div>
               <p className="text-[11px] text-emerald-700 font-medium mt-1">
-                ▲ +8% upward bid trend due to festival demand
-              </p>
-            </div>
-
-            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-              <div className="flex justify-between items-baseline">
-                <span className="text-xs font-bold text-slate-800">Apple (Royal Delicious)</span>
-                <span className="text-base font-black text-slate-900 font-['Space_Grotesk']">
-                  ₹130 - ₹165/kg
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 font-medium mt-1">
-                Firm arrivals reported at central wholesale yard
+                {marketError ||
+                  (currentMarketData?.dataDate
+                    ? `Reported ${currentMarketData.dataDate} · ${currentMarketData.source}`
+                    : currentMarketData?.message || 'No reported price data available.')}
               </p>
             </div>
           </div>
@@ -369,10 +409,15 @@ export const DashboardPage = ({
                     <span className="w-2 h-2 rounded-full bg-emerald-600" />
                     <span>Grade A (Premium)</span>
                   </span>
-                  <span className="font-extrabold text-slate-900">68%</span>
+                  <span className="font-extrabold text-slate-900">
+                    {gradeTotal ? `${Math.round((gradeCounts.A / gradeTotal) * 100)}%` : '—'}
+                  </span>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                  <div className="bg-emerald-600 h-2 rounded-full" style={{ width: '68%' }} />
+                  <div
+                    className="bg-emerald-600 h-2 rounded-full"
+                    style={{ width: `${gradeTotal ? (gradeCounts.A / gradeTotal) * 100 : 0}%` }}
+                  />
                 </div>
               </div>
 
@@ -382,10 +427,15 @@ export const DashboardPage = ({
                     <span className="w-2 h-2 rounded-full bg-amber-500" />
                     <span>Grade B (Standard)</span>
                   </span>
-                  <span className="font-extrabold text-slate-900">24%</span>
+                  <span className="font-extrabold text-slate-900">
+                    {gradeTotal ? `${Math.round((gradeCounts.B / gradeTotal) * 100)}%` : '—'}
+                  </span>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                  <div className="bg-amber-500 h-2 rounded-full" style={{ width: '24%' }} />
+                  <div
+                    className="bg-amber-500 h-2 rounded-full"
+                    style={{ width: `${gradeTotal ? (gradeCounts.B / gradeTotal) * 100 : 0}%` }}
+                  />
                 </div>
               </div>
 
@@ -395,31 +445,26 @@ export const DashboardPage = ({
                     <span className="w-2 h-2 rounded-full bg-rose-500" />
                     <span>Grade C (Sorting)</span>
                   </span>
-                  <span className="font-extrabold text-slate-900">8%</span>
+                  <span className="font-extrabold text-slate-900">
+                    {gradeTotal ? `${Math.round((gradeCounts.C / gradeTotal) * 100)}%` : '—'}
+                  </span>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                  <div className="bg-rose-500 h-2 rounded-full" style={{ width: '8%' }} />
+                  <div
+                    className="bg-rose-500 h-2 rounded-full"
+                    style={{ width: `${gradeTotal ? (gradeCounts.C / gradeTotal) * 100 : 0}%` }}
+                  />
                 </div>
               </div>
             </div>
 
-            <p className="text-[11px] text-slate-500 font-medium pt-1 border-t border-slate-100">
-              Grade A produce fetched an average <strong>₹6.40/kg bonus</strong> over mixed crates.
-            </p>
+            {!gradeTotal && (
+              <p className="text-[11px] text-slate-500 font-medium pt-1 border-t border-slate-100">
+                Grade statistics will appear here after your first analysis.
+              </p>
+            )}
           </div>
 
-          {/* Mandi Advisory Tip */}
-          <div className="bg-emerald-950 text-white rounded-3xl p-5 shadow-sm space-y-2">
-            <div className="flex items-center gap-2 text-emerald-300 text-xs font-extrabold uppercase tracking-wide">
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Harvest Tip</span>
-            </div>
-            <h5 className="text-sm font-bold">Sort Before Dispatching</h5>
-            <p className="text-xs text-emerald-200/80 leading-relaxed font-medium">
-              Eliminate Grade C fruits with blemishes before crate packaging. Mandi commission agents
-              deduct up to 25% when lots contain mixed grades.
-            </p>
-          </div>
         </div>
       </div>
     </div>

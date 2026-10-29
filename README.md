@@ -34,6 +34,7 @@ Users can upload or capture an image of agricultural produce, process it through
 - Node.js
 - Express.js
 - REST API
+- MongoDB
 
 ### Machine Learning
 - Python
@@ -136,11 +137,39 @@ python -m venv .venv
 
 Install the Python packages required by the project. Use your project's dependency file if one is available; otherwise, install the dependencies required by the Python scripts, including the compatible PyTorch and Torchvision versions.
 
-### 5. Start the Application
+### 4. Configure API keys and MongoDB
+```env
+GEMINI_API_KEY="your-gemini-api-key"
+```
 
-Check the `scripts` section of `package.json` to identify the available commands.
+You can use `.env.example` as a reference.
 
-For a Vite development server, run:
+The Gemini API is used for features such as interface translation and AI-assisted functionality. The local produce grading models do not require a Gemini API key.
+
+**Do not upload your `.env` file or API key to GitHub.**
+
+To load reported mandi prices, add your data.gov.in API key to the same `.env` file:
+
+```env
+MANDI_API_KEY="your-data-gov-in-api-key"
+```
+
+The backend requires MongoDB. For a local MongoDB server, configure:
+
+```env
+MONGODB_URI="mongodb://127.0.0.1:27017/agrisense"
+MONGODB_DB="agrisense"
+```
+
+For MongoDB Atlas, use the connection string from your cluster and ensure the application host is allowed by the cluster's network access settings. Keep database credentials private and never commit `.env`.
+
+On startup, the server creates a unique index for farmer phone numbers and an index for per-user analysis history. If the MongoDB collections are empty, existing `data/users.json` and `data/analysis-history.json` records are imported once; the JSON files are left untouched. New profiles and analysis history are written to MongoDB.
+
+The Market Price page uses the AGMARKNET "Current Daily Price of Various Commodities from Various Markets (Mandi)" dataset through the Express backend. The page checks for updates every five minutes and also has a manual refresh button; this only picks up new data when the provider publishes it. The provider reports daily prices, not live auction bids. Prices are converted from ₹/quintal to ₹/kg. The district modal card is an unweighted average of the returned market modal prices. The source grade (for example, `Local`) is not mapped to the app's produce Grade A/B/C; distance is not provided. The report-history chart only shows dates actually returned by the dataset, and may contain only one day. Restart `npm run dev` after changing `.env`.
+
+Opening mandi prices from an analysis result preselects and locks the analyzed commodity so the request only returns that commodity. The analysis grade is shown for context, but AGMARKNET does not provide the same Grade A/B/C classification, so prices are not grade-adjusted. Dragon fruit is accepted as a commodity selection; the page shows an empty-data message if the source has no matching report.
+
+### 5. Start the application
 
 ```bash
 npm run dev

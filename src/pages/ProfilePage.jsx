@@ -1,18 +1,11 @@
-import React, { useState } from 'react';
-import { LanguageSelect } from '../components/LanguageSelect.jsx';
+import React, { useEffect, useState } from 'react';
 import {
   User,
   MapPin,
-  Phone,
-  Crop,
-  Layers,
-  Globe,
-  Bell,
   LogOut,
   ShieldCheck,
   CheckCircle2,
   Save,
-  HelpCircle,
 } from 'lucide-react';
 
 export const ProfilePage = ({
@@ -20,24 +13,36 @@ export const ProfilePage = ({
   onUpdateUser,
   onNavigate,
   onLogout,
-  language,
-  onLanguageChange,
-  translationStatus,
-  translationError,
-  onRetryTranslation,
 }) => {
-  const [district, setDistrict] = useState(user?.district || 'Kolhapur');
-  const [dailySms, setDailySms] = useState(true);
+  const [district, setDistrict] = useState(user?.district || '');
+  const [dailySms, setDailySms] = useState(Boolean(user?.dailySmsAlerts));
   const [saveToast, setSaveToast] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = (e) => {
+  useEffect(() => {
+    setDistrict(user?.district || '');
+    setDailySms(Boolean(user?.dailySmsAlerts));
+  }, [user?.district, user?.dailySmsAlerts]);
+
+  const handleSave = async (e) => {
     e.preventDefault();
-    onUpdateUser({
-      ...user,
-      district,
-    });
-    setSaveToast(true);
-    setTimeout(() => setSaveToast(false), 2500);
+    setIsSaving(true);
+    setSaveError('');
+    setSaveToast(false);
+    try {
+      await onUpdateUser({
+        ...user,
+        district,
+        dailySmsAlerts: dailySms,
+      });
+      setSaveToast(true);
+      setTimeout(() => setSaveToast(false), 2500);
+    } catch (error) {
+      setSaveError(error.message || 'Could not save your account preferences.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -75,20 +80,20 @@ export const ProfilePage = ({
           <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-5">
             <div className="flex items-center gap-4">
               <div className="w-18 h-18 rounded-2xl bg-gradient-to-br from-emerald-600 to-green-800 text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-emerald-700/20 ring-4 ring-emerald-50">
-                {user?.name ? user.name.charAt(0) : 'P'}
+                {user?.name?.charAt(0).toUpperCase() || '?'}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase mb-1">
                   <ShieldCheck className="w-3 h-3 text-emerald-700" />
-                  <span>Verified</span>
+                  <span>Account</span>
                 </div>
                 <h2 className="text-lg font-black text-slate-900 truncate">
-                  {user?.name || 'Prachi Chougale'}
+                  {user?.name || '—'}
                 </h2>
                 <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium mt-0.5">
                   <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                   <span className="truncate">
-                    {user?.district || 'Kolhapur'}, {user?.state || 'Maharashtra'}
+                    {user?.district || 'District not set'}, {user?.state || 'State not set'}
                   </span>
                 </div>
               </div>
@@ -97,12 +102,12 @@ export const ProfilePage = ({
             <div className="space-y-2 pt-2 border-t border-slate-100 text-xs">
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50">
                 <span className="text-slate-500 font-semibold">Registered Phone</span>
-                <span className="font-extrabold text-slate-900">{user?.phone || '+91 98220 54321'}</span>
+                <span className="font-extrabold text-slate-900">{user?.phone || '—'}</span>
               </div>
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50">
                 <span className="text-slate-500 font-semibold">Primary Produce</span>
                 <span className="font-extrabold text-slate-900">
-                  {user?.primaryCrops ? user.primaryCrops.join(', ') : 'Tomato, Apple'}
+                  {user?.primaryCrops?.length ? user.primaryCrops.join(', ') : 'Not set'}
                 </span>
               </div>
             </div>
@@ -142,32 +147,22 @@ export const ProfilePage = ({
                 <select
                   value={district}
                   onChange={(e) => setDistrict(e.target.value)}
+                  required
                   className="w-full px-4 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/10 outline-none cursor-pointer"
                 >
                   <option value="Kolhapur">Kolhapur (Maharashtra)</option>
                   <option value="Nashik">Nashik (Maharashtra)</option>
                   <option value="Pune">Pune (Maharashtra)</option>
                   <option value="Shimla">Shimla (Himachal Pradesh)</option>
+                  <option value="Sangli">Sangli (Maharashtra)</option>
+                  <option value="Satara">Satara (Maharashtra)</option>
+                  <option value="Solapur">Solapur (Maharashtra)</option>
+                  <option value="Ahmednagar">Ahmednagar (Maharashtra)</option>
+                  <option value="Nagpur">Nagpur (Maharashtra)</option>
+                  <option value="Bengaluru">Bengaluru (Karnataka)</option>
                 </select>
                 <p className="text-[11px] text-slate-400 mt-1">
                   Primary benchmark market for your fresh harvest valuations
-                </p>
-              </div>
-
-              {/* Interface Language */}
-              <div>
-                <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
-                  Display Language
-                </label>
-                <LanguageSelect
-                  language={language}
-                  onChange={onLanguageChange}
-                  status={translationStatus}
-                  errorMessage={translationError}
-                  onRetry={onRetryTranslation}
-                />
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Language for reports and mandi updates
                 </p>
               </div>
 
@@ -188,32 +183,21 @@ export const ProfilePage = ({
             <div className="pt-2">
               <button
                 type="submit"
-                className="px-6 py-3.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-extrabold shadow-md shadow-emerald-800/20 transition cursor-pointer flex items-center gap-2"
+                disabled={isSaving}
+                className="px-6 py-3.5 bg-emerald-800 hover:bg-emerald-900 disabled:opacity-60 text-white rounded-xl text-xs font-extrabold shadow-md shadow-emerald-800/20 transition cursor-pointer flex items-center gap-2"
               >
                 <Save className="w-4 h-4" />
-                <span>Save Preferences</span>
+                <span>{isSaving ? 'Saving...' : 'Save Preferences'}</span>
               </button>
             </div>
           </form>
 
-          {/* Mandi Support & Advisory Helpline */}
-          <div className="bg-white rounded-3xl p-6 border border-emerald-100 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-xs font-extrabold text-emerald-900 uppercase">
-                <HelpCircle className="w-4 h-4 text-emerald-600" />
-                <span>Farmer Support Desk</span>
-              </div>
-              <p className="text-xs text-slate-600 font-medium">
-                Need help with produce grading or mandi transportation? Call our AgriSense Mandi Helpline.
-              </p>
-            </div>
-            <div className="shrink-0">
-              <span className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-50 text-emerald-900 font-extrabold text-xs rounded-xl border border-emerald-200">
-                <Phone className="w-3.5 h-3.5 text-emerald-700" />
-                <span>1800-425-AGRI (Toll Free)</span>
-              </span>
-            </div>
-          </div>
+          {saveError && (
+            <p role="alert" className="text-sm font-semibold text-rose-700">
+              {saveError}
+            </p>
+          )}
+
         </div>
       </div>
     </div>

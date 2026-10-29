@@ -1,16 +1,10 @@
 import React from 'react';
-import { LanguageSelect } from './LanguageSelect.jsx';
-import { Home, Scan, TrendingUp, History, User, Leaf, Sparkles } from 'lucide-react';
+import { Home, Scan, TrendingUp, History, User, Leaf } from 'lucide-react';
 
 export const Navbar = ({
   activePage,
   onNavigate,
-  userName = 'Prachi Chougale',
-  language,
-  onLanguageChange,
-  translationStatus,
-  translationError,
-  onRetryTranslation,
+  userName = '',
 }) => {
   const navItems = [
     { id: 'dashboard', label: 'Home', icon: <Home className="w-5 h-5" /> },
@@ -69,30 +63,13 @@ export const Navbar = ({
 
           {/* Top Right Utilities */}
           <div className="flex items-center gap-2.5">
-            <LanguageSelect
-              language={language}
-              onChange={onLanguageChange}
-              status={translationStatus}
-              errorMessage={translationError}
-              onRetry={onRetryTranslation}
-            />
-
-            {/* Link back to Overview / How it works */}
-            <button
-              onClick={() => onNavigate('landing')}
-              className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100/70 border border-emerald-200/70 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="hidden sm:inline">How It Works</span>
-            </button>
-
             {/* Quick Profile avatar */}
             <button
               onClick={() => onNavigate('profile')}
               className="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center font-bold text-xs hover:ring-2 hover:ring-emerald-400 transition cursor-pointer"
               title={userName}
             >
-              {userName.charAt(0)}
+              {userName.charAt(0).toUpperCase() || '?'}
             </button>
           </div>
         </div>

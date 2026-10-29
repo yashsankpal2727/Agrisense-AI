@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { History, Search, Filter, ChevronRight, Calendar, ArrowRight, Camera, ShieldCheck, TrendingUp, Trash2, Loader2 } from 'lucide-react';
+import { History, Search, ChevronRight, ArrowRight, Camera, Trash2, Loader2 } from 'lucide-react';
 
 export const HistoryPage = ({
   history = [],
+  historyError = '',
   onSelectAnalysis,
   onNavigate,
   onClearHistory,
@@ -44,6 +45,9 @@ export const HistoryPage = ({
       item?.variety?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCommodity && matchesGrade && matchesSearch;
   });
+  const commodities = [...new Set(
+    history.map((item) => item?.commodity).filter(Boolean)
+  )];
 
   return (
     <div className="w-full space-y-6">
@@ -58,7 +62,7 @@ export const HistoryPage = ({
             Harvest Produce Archive
           </h1>
           <p className="text-xs text-slate-500 font-medium">
-            Searchable historical archive of all graded produce batches, scores, and mandi realizations
+            Searchable history of your produce analyses and grading results
           </p>
         </div>
 
@@ -92,6 +96,11 @@ export const HistoryPage = ({
           {clearError}
         </p>
       )}
+      {historyError && (
+        <p role="alert" className="text-sm font-semibold text-rose-700">
+          {historyError}
+        </p>
+      )}
 
       {/* Filter and Search Bar */}
       <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-3.5">
@@ -110,7 +119,7 @@ export const HistoryPage = ({
 
           {/* Commodity Pill filter */}
           <div className="flex gap-1.5 self-start sm:self-auto overflow-x-auto w-full sm:w-auto">
-            {['all', 'Tomato', 'Apple'].map((cat) => (
+            {['all', ...commodities].map((cat) => (
               <button
                 key={cat}
                 onClick={() => setFilterCommodity(cat)}
@@ -120,7 +129,7 @@ export const HistoryPage = ({
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200/70'
                 }`}
               >
-                {cat === 'all' ? 'All Crops' : cat === 'Tomato' ? '🍅 Tomato' : '🍎 Apple'}
+                {cat === 'all' ? 'All Crops' : cat}
               </button>
             ))}
           </div>
@@ -211,15 +220,9 @@ export const HistoryPage = ({
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
-                      Modal Rate
-                    </span>
-                    <span className="text-base font-black text-emerald-800 font-['Space_Grotesk']">
-                      ₹{item.prices?.modal}/kg
-                    </span>
-                  </div>
-
+                  <span className="text-xs text-slate-500">
+                    Market: {item.market || item.district || '—'}
+                  </span>
                   <div className="flex items-center gap-1 text-xs font-bold text-emerald-700 group-hover:text-emerald-900">
                     <span>View Inspection Report</span>
                     <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

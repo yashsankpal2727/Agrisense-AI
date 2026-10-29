@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 from torchvision import datasets, transforms, models
 from torch.utils.data import DataLoader, WeightedRandomSampler
+from sklearn.metrics import classification_report, confusion_matrix
 
 # ============================================================
 # CONFIGURATION
@@ -285,13 +286,14 @@ def train_one_epoch(model, loader, criterion, optimizer):
     return epoch_loss, epoch_accuracy
 
 
-def validate(model, loader, criterion):
+def validate(model, loader, criterion, class_names):
 
     model.eval()
 
     running_loss = 0.0
-    correct = 0
     total = 0
+    all_predictions = []
+    all_labels = []
 
     with torch.no_grad():
 
@@ -306,23 +308,34 @@ def validate(model, loader, criterion):
 
             running_loss += loss.item() * images.size(0)
 
-            _, predicted = torch.max(outputs, 1)
-
             total += labels.size(0)
-
-            correct += (predicted == labels).sum().item()
+            all_predictions.extend(
+                outputs.argmax(dim=1).cpu().tolist()
+            )
+            all_labels.extend(labels.cpu().tolist())
 
     epoch_loss = running_loss / total
-    epoch_accuracy = correct / total
+    epoch_accuracy = sum(
+        predicted == label
+        for predicted, label in zip(all_predictions, all_labels)
+    ) / total
+    metrics = classification_report(
+        all_labels,
+        all_predictions,
+        labels=list(range(len(class_names))),
+        target_names=class_names,
+        output_dict=True,
+        zero_division=0
+    )
 
-    return epoch_loss, epoch_accuracy
+    return epoch_loss, epoch_accuracy, metrics, all_predictions, all_labels
 
 
 # ============================================================
 # TRAIN
 # ============================================================
 
-best_val_accuracy = 0.0
+best_val_macro_f1 = -1.0
 best_model_weights = copy.deepcopy(model.state_dict())
 
 print("\nStarting training...")
@@ -341,11 +354,14 @@ for epoch in range(NUM_EPOCHS):
         optimizer
     )
 
-    val_loss, val_accuracy = validate(
+    val_loss, val_accuracy, val_metrics, _, _ = validate(
         model,
         val_loader,
-        criterion
+        criterion,
+        val_dataset.classes
     )
+    val_macro_f1 = val_metrics["macro avg"]["f1-score"]
+    other_f1 = val_metrics["other"]["f1-score"]
 
     epoch_time = time.time() - epoch_start
 
@@ -355,20 +371,22 @@ for epoch in range(NUM_EPOCHS):
         f"| Train Acc: {train_accuracy * 100:.2f}% "
         f"| Val Loss: {val_loss:.4f} "
         f"| Val Acc: {val_accuracy * 100:.2f}% "
+        f"| Val Macro F1: {val_macro_f1:.4f} "
+        f"| Other F1: {other_f1:.4f} "
         f"| Time: {epoch_time:.1f}s"
     )
 
-    if val_accuracy > best_val_accuracy:
+    if val_macro_f1 > best_val_macro_f1:
 
-        best_val_accuracy = val_accuracy
+        best_val_macro_f1 = val_macro_f1
 
         best_model_weights = copy.deepcopy(
             model.state_dict()
         )
 
         print(
-            f"  New best validation accuracy: "
-            f"{best_val_accuracy * 100:.2f}%"
+            f"  New best validation macro F1: "
+            f"{best_val_macro_f1:.4f}"
         )
 
 
@@ -385,8 +403,8 @@ print("TRAINING COMPLETED")
 print("=" * 60)
 
 print(
-    f"Best Validation Accuracy: "
-    f"{best_val_accuracy * 100:.2f}%"
+    f"Best Validation Macro F1: "
+    f"{best_val_macro_f1:.4f}"
 )
 
 print(
@@ -399,10 +417,11 @@ print(
 # TEST
 # ============================================================
 
-test_loss, test_accuracy = validate(
+test_loss, test_accuracy, test_metrics, test_predictions, test_labels = validate(
     model,
     test_loader,
-    criterion
+    criterion,
+    test_dataset.classes
 )
 
 print("\nTEST RESULTS")
@@ -410,6 +429,27 @@ print("-" * 60)
 
 print(f"Test Loss: {test_loss:.4f}")
 print(f"Test Accuracy: {test_accuracy * 100:.2f}%")
+print(
+    "Test Macro F1: "
+    f"{test_metrics['macro avg']['f1-score']:.4f}"
+)
+print("\nPer-class test metrics:")
+for class_name in test_dataset.classes:
+    class_metrics = test_metrics[class_name]
+    print(
+        f"{class_name}: "
+        f"precision={class_metrics['precision']:.4f}, "
+        f"recall={class_metrics['recall']:.4f}, "
+        f"F1={class_metrics['f1-score']:.4f}"
+    )
+print("\nTest confusion matrix (rows=actual, columns=predicted):")
+print(
+    confusion_matrix(
+        test_labels,
+        test_predictions,
+        labels=list(range(len(test_dataset.classes)))
+    )
+)
 
 
 # ============================================================

@@ -22,7 +22,64 @@ Users can upload or capture an image of agricultural produce, process it through
 - **User Interface:** Provides pages for the dashboard, authentication, upload, analysis, results, history, market prices, and profile.
 - **Backend Integration:** Connects the web application with backend services and the Python ML engine.
 
+<<<<<<< HEAD
 ## Technology Stack
+=======
+## How it works
+
+The application uses React for the frontend, Express.js and MongoDB for the backend, and Python for the machine learning part.
+
+```text
+User
+  ↓
+Upload / Camera
+  ↓
+React Frontend
+  ↓
+Node.js + Express
+  ↓
+Python ML Engine
+  ↓
+Produce Detection
+  ↓
+Grade Classification
+  ↓
+Quality Score
+  ↓
+Result
+```
+
+The ML pipeline uses trained PyTorch models to process the submitted image.
+
+## Machine Learning Models
+
+The trained models are stored in:
+
+```text
+ml/models/
+```
+
+Current models:
+
+| Model                       | Purpose                       |
+| --------------------------- | ----------------------------- |
+| `fruit_detection_model.pth` | Detects the supported produce |
+| `apple_grade_model.pth`     | Classifies apple quality      |
+| `tomato_grade_model.pth`    | Classifies tomato quality     |
+| `dragonfruit_grade_model.pth` | Classifies dragon fruit quality |
+
+The grading classes are:
+
+```text
+Grade A
+Grade B
+Grade C
+```
+
+The project also contains the training and testing scripts used during model development.
+
+## Tech Stack
+>>>>>>> e071cb2 (Connect AgriSense persistence to MongoDB)
 
 ### Frontend
 - React.js
@@ -31,10 +88,16 @@ Users can upload or capture an image of agricultural produce, process it through
 - CSS
 
 ### Backend
+<<<<<<< HEAD
 - Node.js
 - Express.js
 - REST API
-- MongoDB
+=======
+
+* Node.js
+* Express.js
+* MongoDB
+>>>>>>> e071cb2 (Connect AgriSense persistence to MongoDB)
 
 ### Machine Learning
 - Python
@@ -137,7 +200,17 @@ python -m venv .venv
 
 Install the Python packages required by the project. Use your project's dependency file if one is available; otherwise, install the dependencies required by the Python scripts, including the compatible PyTorch and Torchvision versions.
 
+<<<<<<< HEAD
+### 5. Start the Application
+=======
 ### 4. Configure API keys and MongoDB
+>>>>>>> e071cb2 (Connect AgriSense persistence to MongoDB)
+
+Check the `scripts` section of `package.json` to identify the available commands.
+
+<<<<<<< HEAD
+For a Vite development server, run:
+=======
 ```env
 GEMINI_API_KEY="your-gemini-api-key"
 ```
@@ -170,6 +243,7 @@ The Market Price page uses the AGMARKNET "Current Daily Price of Various Commodi
 Opening mandi prices from an analysis result preselects and locks the analyzed commodity so the request only returns that commodity. The analysis grade is shown for context, but AGMARKNET does not provide the same Grade A/B/C classification, so prices are not grade-adjusted. Dragon fruit is accepted as a commodity selection; the page shows an empty-data message if the source has no matching report.
 
 ### 5. Start the application
+>>>>>>> e071cb2 (Connect AgriSense persistence to MongoDB)
 
 ```bash
 npm run dev
